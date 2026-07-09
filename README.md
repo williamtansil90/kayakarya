@@ -15,17 +15,30 @@ Platform pembelajaran kreatif terinspirasi Domestika.
 - DNS `kayakarya.com` → server IP
 - Google OAuth: add `https://kayakarya.com` ke Authorized JavaScript origins
 
-### Quick Start
+### Quick Start (Domain kayakarya.com)
 
 ```bash
 # 1. Setup environment
 cp .env.example .env
 # Edit .env dengan kredensial database & Google OAuth
 
-# 2. Build & run containers (production — frontend 8701, backend 8702)
-docker compose up -d --build
+# 2. Pastikan DNS kayakarya.com mengarah ke IP server ini
 
-# Atau development (sama: frontend 8701, backend 8702)
+# 3. Jalankan Docker + nginx domain (satu perintah)
+chmod +x deploy/start-docker.sh
+./deploy/start-docker.sh
+```
+
+Atau manual:
+
+```bash
+docker compose up -d --build
+sudo bash deploy/setup-nginx.sh   # proxy kayakarya.com -> 127.0.0.1:8701
+```
+
+Development (expose backend juga):
+
+```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
