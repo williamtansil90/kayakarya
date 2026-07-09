@@ -4,8 +4,8 @@ Platform pembelajaran kreatif terinspirasi Domestika.
 
 ## Tech Stack
 
-- **Frontend**: React + Vite + Tailwind CSS (port 8002)
-- **Backend**: Flask Python (port 8001)
+- **Frontend**: React + Vite + Tailwind CSS (port 8701)
+- **Backend**: Flask Python (port 8702)
 - **Database**: MySQL (kayakarya_course)
 
 ## Docker Deployment (Production)
@@ -22,20 +22,30 @@ Platform pembelajaran kreatif terinspirasi Domestika.
 cp .env.example .env
 # Edit .env dengan kredensial database & Google OAuth
 
-# 2. Build & run containers (production — port 80)
+# 2. Build & run containers (production — frontend 8701, backend 8702)
 docker compose up -d --build
 
-# Atau development (backend 8001, web 18080)
+# Atau development (sama: frontend 8701, backend 8702)
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
+
+### Deploy via Coolify / PaaS
+
+| Setting | Nilai |
+|---------|-------|
+| Frontend port | `8701:80` |
+| Backend internal port | `8702` |
+| Env file | `.env` dengan `GOOGLE_CLIENT_ID`, `DB_*`, dll |
+
+Set environment variable `GOOGLE_CLIENT_ID` di panel Coolify, bukan hardcode di compose.
 
 ### Architecture
 
 | Service | Container | Port |
 |---------|-----------|------|
-| Backend (Flask/Gunicorn) | `backend` | internal 8001 |
-| Frontend (React/Nginx) | `web` | host `80` (atau `18080` di dev) |
-| Host Nginx (opsional) | kayakarya.com | 80 → proxy ke web |
+| Backend (Flask/Gunicorn) | `backend` | internal 8702 |
+| Frontend (React/Nginx) | `web` | host `8701` |
+| Host Nginx (opsional) | kayakarya.com | 80 → proxy ke `8701` |
 
 ### URLs (Production)
 
@@ -72,7 +82,7 @@ docker compose down           # Stop all
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS kayakarya_course;"
 ```
 
-### Backend (port 8001)
+### Backend (port 8702)
 
 ```bash
 cd backend
@@ -82,7 +92,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### Frontend (port 8002)
+### Frontend (port 8701)
 
 ```bash
 cd frontend
@@ -94,11 +104,11 @@ npm run dev
 
 | Area | URL |
 |------|-----|
-| Student Home | http://localhost:8002/ |
-| My Courses | http://localhost:8002/my-courses |
-| Tutor | http://localhost:8002/tutor |
-| Admin | http://localhost:8002/admin |
-| API Health | http://localhost:8001/api/health |
+| Student Home | http://localhost:8701/ |
+| My Courses | http://localhost:8701/my-courses |
+| Tutor | http://localhost:8701/tutor |
+| Admin | http://localhost:8701/admin |
+| API Health | http://localhost:8702/api/health |
 
 ## Features
 
@@ -124,7 +134,7 @@ npm run dev
 
 ## Google OAuth
 
-Client ID sudah dikonfigurasi. Pastikan `http://localhost:8002` ditambahkan di Google Cloud Console → Authorized JavaScript origins.
+Client ID sudah dikonfigurasi. Pastikan `http://localhost:8701` ditambahkan di Google Cloud Console → Authorized JavaScript origins.
 
 ## Admin Default
 

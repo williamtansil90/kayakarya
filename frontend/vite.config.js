@@ -5,12 +5,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 8002,
+    port: 8701,
     host: true,
     allowedHosts: ['kayakarya.com', 'www.kayakarya.com', 'localhost'],
     proxy: {
       '/api': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8702',
         changeOrigin: true,
       },
     },

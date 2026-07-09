@@ -1,9 +1,9 @@
-# Development overlay: expose backend + use Vite dev server on host
+# Development overlay: expose backend + web on custom ports
 services:
   backend:
     ports:
-      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8702:8702"
 
   web:
     ports:
-      - "127.0.0.1:18080:80"
+      - "127.0.0.1:8701:80"

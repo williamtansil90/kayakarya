@@ -9,4 +9,4 @@ sudo cp "$CONF_SRC" "$CONF_DEST"
 sudo ln -sf "$CONF_DEST" /etc/nginx/sites-enabled/kayakarya.com
 sudo nginx -t
 sudo systemctl reload nginx
-echo "Nginx reloaded. kayakarya.com -> http://127.0.0.1:18080"
+echo "Nginx reloaded. kayakarya.com -> http://127.0.0.1:8701"

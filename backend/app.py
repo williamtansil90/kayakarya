@@ -16,7 +16,7 @@ def create_app():
 
     cors_origins = os.getenv(
         'CORS_ORIGINS',
-        'http://localhost:8002,http://127.0.0.1:8002'
+        'http://localhost:8701,http://127.0.0.1:8701'
     ).split(',')
     CORS(app, origins=[o.strip() for o in cors_origins if o.strip()], supports_credentials=True)
 
@@ -65,4 +65,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(host='0.0.0.0', port=8001, debug=True)
+    app.run(host='0.0.0.0', port=8702, debug=True)

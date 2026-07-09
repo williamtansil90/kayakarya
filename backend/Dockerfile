@@ -13,6 +13,6 @@ COPY . .
 
 RUN mkdir -p uploads && chmod +x entrypoint.sh
 
-EXPOSE 8001
+EXPOSE 8702
 
 ENTRYPOINT ["./entrypoint.sh"]
