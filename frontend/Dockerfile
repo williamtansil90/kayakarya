@@ -6,14 +6,15 @@ WORKDIR /app
 ENV NODE_ENV=development
 
 COPY package.json package-lock.json ./
-RUN npm ci --include=dev
-
 COPY . .
 
 ARG VITE_GOOGLE_CLIENT_ID
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
-RUN npm run build
+# Install + build in one layer so stale cache cannot skip vite
+RUN npm ci --include=dev \
+    && test -x node_modules/.bin/vite \
+    && node_modules/.bin/vite build
 
 FROM nginx:alpine
 

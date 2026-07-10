@@ -23,5 +23,12 @@ RESULT2=$(docker run --rm -e NODE_ENV=production -v "$(pwd)/frontend:/app" -w /a
 
 log_event "B" "verify-docker-build.sh:include-dev" "npm ci --include=dev result" "{\"result\":\"$RESULT2\"}"
 
+log_event "C" "verify-docker-build.sh:start" "testing combined npm ci + vite build in one layer" '{"pattern":"single-run"}'
+
+RESULT3=$(docker build --no-cache -t kayakarya-verify-web -f frontend/Dockerfile frontend 2>&1 | tail -3)
+STATUS=$?
+log_event "C" "verify-docker-build.sh:dockerfile-build" "full docker build result" "{\"exit\":$STATUS,\"tail\":\"$(echo "$RESULT3" | tr '\n' ' ' | sed 's/"/\\"/g')\"}"
+
 echo "prod npm ci: $RESULT"
 echo "include=dev:  $RESULT2"
+echo "docker build exit: $STATUS"

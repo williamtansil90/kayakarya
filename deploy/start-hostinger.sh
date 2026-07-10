@@ -12,7 +12,8 @@ if [ ! -f .env ]; then
 fi
 
 echo "==> Build images (no cache)..."
-$COMPOSE build --no-cache
+docker builder prune -f >/dev/null 2>&1 || true
+$COMPOSE build --no-cache --pull
 
 echo "==> Start containers..."
 $COMPOSE up -d
