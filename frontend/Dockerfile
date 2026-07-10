@@ -2,8 +2,11 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Build needs devDependencies (vite, tailwind, etc.) even when NODE_ENV=production
+ENV NODE_ENV=development
+
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY . .
 

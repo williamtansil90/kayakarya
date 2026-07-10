@@ -1,0 +1,6 @@
+# Hostinger/VPS overlay — expose web on all interfaces (no host nginx required).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.hostinger.yml up -d --build
+services:
+  web:
+    ports:
+      - "8701:80"

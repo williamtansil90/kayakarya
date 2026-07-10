@@ -42,6 +42,20 @@ Development (expose backend juga):
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
+### Deploy di Hostinger / VPS baru
+
+```bash
+git clone https://github.com/williamtansil90/kayakarya.git
+cd kayakarya
+cp .env.example .env
+# Edit .env (DB_HOST, DB_PASSWORD, GOOGLE_CLIENT_ID, dll)
+
+# Build tanpa cache (hindari layer lama yang error)
+docker compose -f docker-compose.yml -f docker-compose.hostinger.yml up -d --build --no-cache
+```
+
+Akses: `http://IP_SERVER:8701`
+
 ### Deploy via Hostinger Docker Manager
 
 1. Repo: `https://github.com/williamtansil90/kayakarya`
