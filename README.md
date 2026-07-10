@@ -51,7 +51,8 @@ cp .env.example .env
 # Edit .env (DB_HOST, DB_PASSWORD, GOOGLE_CLIENT_ID, dll)
 
 # Build tanpa cache (hindari layer lama yang error)
-docker compose -f docker-compose.yml -f docker-compose.hostinger.yml up -d --build --no-cache
+docker compose -f docker-compose.yml -f docker-compose.hostinger.yml build --no-cache
+docker compose -f docker-compose.yml -f docker-compose.hostinger.yml up -d
 ```
 
 Akses: `http://IP_SERVER:8701`
