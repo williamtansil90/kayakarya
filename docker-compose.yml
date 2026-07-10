@@ -1,11 +1,21 @@
+# Production compose — optimized for Hostinger Docker Manager.
+# Hostinger scans this file at repo root on the default branch.
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME}
+      SECRET_KEY: ${SECRET_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://kayakarya.com,https://www.kayakarya.com}
     volumes:
       - uploads_data:/app/uploads
     expose:
@@ -18,8 +28,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - kayakarya
 
   web:
     build:
@@ -29,16 +37,10 @@ services:
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8701:80"
+      - "80:80"
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      - kayakarya
 
 volumes:
   uploads_data:
-
-networks:
-  kayakarya:
-    driver: bridge

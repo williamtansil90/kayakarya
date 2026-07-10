@@ -1,0 +1,10 @@
+# VPS overlay — bind web to localhost for host nginx reverse proxy.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.vps.yml up -d --build
+services:
+  backend:
+    env_file:
+      - .env
+
+  web:
+    ports:
+      - "127.0.0.1:8701:80"

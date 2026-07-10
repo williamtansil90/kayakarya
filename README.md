@@ -42,6 +42,35 @@ Development (expose backend juga):
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
+### Deploy via Hostinger Docker Manager
+
+1. Repo: `https://github.com/williamtansil90/kayakarya`
+2. Branch: **`main`**
+3. Hostinger otomatis membaca `docker-compose.yml` di root
+4. Assign domain `kayakarya.com` ke service **`web`** (port 80)
+5. Isi environment variables di panel Hostinger:
+
+| Variable | Contoh |
+|----------|--------|
+| `DB_HOST` | `202.10.48.75` |
+| `DB_USER` | `root` |
+| `DB_PASSWORD` | `...` |
+| `DB_PORT` | `3306` |
+| `DB_NAME` | `kayakarya_course` |
+| `SECRET_KEY` | random string |
+| `GOOGLE_CLIENT_ID` | dari Google Console |
+| `GOOGLE_CLIENT_SECRET` | dari Google Console |
+| `CORS_ORIGINS` | `https://kayakarya.com,https://www.kayakarya.com` |
+
+Pastikan IP server Hostinger di-whitelist di MySQL eksternal.
+
+### Deploy via VPS (nginx + localhost)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.vps.yml up -d --build
+sudo bash deploy/setup-nginx.sh
+```
+
 ### Deploy via Coolify / PaaS
 
 | Setting | Nilai |
