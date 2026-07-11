@@ -1,4 +1,7 @@
 from datetime import datetime
+import os
+import time
+import json
 from flask import Blueprint, request, jsonify, g
 from models import (
     db, Course, Material, Enrollment, MaterialProgress,
@@ -6,8 +9,44 @@ from models import (
 )
 from auth import login_required, role_required
 from community_utils import topic_list_item, build_topic_thread, topic_depth, count_topic_replies
+from payment_service import PaymentError, create_payment, get_payment_status
 
 courses_bp = Blueprint('courses', __name__)
+LOG_PATH = '/home/ubuntu/kayakarya_course/.cursor/debug-749551.log'
+
+
+def _log(location, message, data=None, hypothesis_id='BUY'):
+    entry = {
+        'sessionId': '749551',
+        'hypothesisId': hypothesis_id,
+        'location': location,
+        'message': message,
+        'data': data or {},
+        'timestamp': int(time.time() * 1000),
+        'runId': 'buy-course',
+    }
+    try:
+        os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+        with open(LOG_PATH, 'a') as f:
+            f.write(json.dumps(entry) + '\n')
+    except OSError:
+        pass
+
+
+def _app_base_url():
+    return os.getenv('APP_URL', 'https://kayakarya.com').rstrip('/')
+
+
+def _complete_purchase(enrollment, sale):
+    enrollment.payment_status = 'paid'
+    sale.status = 'paid'
+    db.session.commit()
+
+
+def _cancel_purchase(enrollment, sale):
+    enrollment.payment_status = 'cancel'
+    sale.status = 'cancel'
+    db.session.commit()
 
 
 @courses_bp.route('/', methods=['GET'])
@@ -73,28 +112,118 @@ def get_course(course_id):
 def buy_course(course_id):
     course = Course.query.get_or_404(course_id)
     user = g.current_user
+    price = int(float(course.price or 0))
 
     existing = Enrollment.query.filter_by(user_id=user.id, course_id=course_id).first()
     if existing and existing.payment_status == 'paid':
         return jsonify({'error': 'Already enrolled'}), 400
 
+    # #region agent log
+    _log('courses_routes.py:buy_course', 'buy requested', {
+        'course_id': course_id,
+        'user_id': user.id,
+        'price': price,
+    }, 'BUY')
+    # #endregion
+
+    if price <= 0:
+        if existing:
+            existing.payment_status = 'paid'
+            enrollment = existing
+        else:
+            enrollment = Enrollment(user_id=user.id, course_id=course_id, payment_status='paid')
+            db.session.add(enrollment)
+        sale = Sale(
+            user_id=user.id,
+            course_id=course_id,
+            tutor_id=course.tutor_id,
+            amount=course.price,
+            status='paid',
+        )
+        db.session.add(sale)
+        db.session.commit()
+        return jsonify({'enrollment': enrollment.to_dict(), 'message': 'Course enrolled successfully', 'free': True})
+
+    pending_sale = Sale.query.filter_by(
+        user_id=user.id, course_id=course_id, status='waiting_payment'
+    ).order_by(Sale.created_at.desc()).first()
+
+    if pending_sale and pending_sale.invoice_number:
+        try:
+            gateway_status = get_payment_status(pending_sale.invoice_number)
+            if gateway_status == 'success':
+                enrollment = existing or Enrollment(
+                    user_id=user.id, course_id=course_id, payment_status='waiting_payment'
+                )
+                if not existing:
+                    db.session.add(enrollment)
+                _complete_purchase(enrollment, pending_sale)
+                return jsonify({'enrollment': enrollment.to_dict(), 'message': 'Course purchased successfully'})
+            if gateway_status == 'pending' and pending_sale.payment_url:
+                return jsonify({
+                    'payment_url': pending_sale.payment_url,
+                    'invoice_number': pending_sale.invoice_number,
+                    'status': 'pending',
+                })
+        except PaymentError:
+            pass
+
     if existing:
-        existing.payment_status = 'paid'
+        existing.payment_status = 'waiting_payment'
         enrollment = existing
     else:
-        enrollment = Enrollment(user_id=user.id, course_id=course_id, payment_status='paid')
+        enrollment = Enrollment(user_id=user.id, course_id=course_id, payment_status='waiting_payment')
         db.session.add(enrollment)
 
+    invoice_number = f"KK-{course_id}-{user.id}-{int(time.time())}"
     sale = Sale(
         user_id=user.id,
         course_id=course_id,
         tutor_id=course.tutor_id,
         amount=course.price,
-        status='paid'
+        invoice_number=invoice_number,
+        status='waiting_payment',
     )
     db.session.add(sale)
+    db.session.flush()
+
+    callback_url = f"{_app_base_url()}/api/payment/callback"
+    try:
+        payment = create_payment(
+            product_description=f"Course: {course.title}",
+            qty=1,
+            total_price=price,
+            callback_url=callback_url,
+            invoice_number=invoice_number,
+        )
+    except PaymentError as exc:
+        db.session.rollback()
+        # #region agent log
+        _log('courses_routes.py:buy_course', 'payment create failed', {
+            'course_id': course_id,
+            'invoice_number': invoice_number,
+            'error': str(exc),
+        }, 'BUY')
+        # #endregion
+        return jsonify({'error': str(exc)}), 502
+
+    sale.payment_url = payment.get('payment_url')
     db.session.commit()
-    return jsonify({'enrollment': enrollment.to_dict(), 'message': 'Course purchased successfully'})
+
+    # #region agent log
+    _log('courses_routes.py:buy_course', 'payment created', {
+        'course_id': course_id,
+        'invoice_number': invoice_number,
+        'has_payment_url': bool(sale.payment_url),
+    }, 'BUY')
+    # #endregion
+
+    return jsonify({
+        'payment_url': sale.payment_url,
+        'invoice_number': invoice_number,
+        'status': 'pending',
+        'message': 'Redirecting to payment',
+    })
 
 
 @courses_bp.route('/my-courses', methods=['GET'])

@@ -83,6 +83,22 @@ def run_sql_migration():
         conn.close()
 
 
+def _run_sales_payment_migration():
+    conn = pymysql.connect(**DB_CONFIG)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SHOW COLUMNS FROM sales LIKE 'invoice_number'")
+            if not cur.fetchone():
+                sql_path = os.path.join(os.path.dirname(__file__), 'migrations', '006_sales_payment_fields.sql')
+                with open(sql_path, 'r') as f:
+                    cur.execute(f.read())
+                conn.commit()
+                print('✓ Added sales payment columns')
+                log_event('sales payment migration done')
+    finally:
+        conn.close()
+
+
 def run_orm_migration():
     from app import create_app
     from models import db, User
@@ -90,6 +106,7 @@ def run_orm_migration():
     app = create_app()
     with app.app_context():
         db.create_all()
+        _run_sales_payment_migration()
         admin = User.query.filter_by(email='admin@kayakarya.com').first()
         if not admin:
             admin = User(

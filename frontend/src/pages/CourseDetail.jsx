@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ const TABS = ['info', 'content', 'community', 'project'];
 
 export default function CourseDetail() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [tab, setTab] = useState('info');
@@ -32,6 +33,23 @@ export default function CourseDetail() {
   useEffect(() => {
     loadCourse();
   }, [id]);
+
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    if (!payment) return;
+    const messages = {
+      success: 'Pembayaran berhasil! Course sudah aktif.',
+      failed: 'Pembayaran gagal. Silakan coba lagi.',
+      pending: 'Pembayaran masih diproses.',
+      verify_failed: 'Gagal memverifikasi pembayaran. Hubungi admin jika sudah bayar.',
+    };
+    if (messages[payment]) {
+      alert(messages[payment]);
+      searchParams.delete('payment');
+      setSearchParams(searchParams, { replace: true });
+      loadCourse();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (course?.enrolled && tab === 'project') {
@@ -58,7 +76,14 @@ export default function CourseDetail() {
   const handleBuy = async () => {
     setBuying(true);
     try {
-      await coursesApi.buy(id);
+      const res = await coursesApi.buy(id);
+      if (res.data.payment_url) {
+        // #region agent log
+        fetch('http://localhost:61351/ingest/b83563f1-55a3-4588-9237-377b1e3571ce',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'749551'},body:JSON.stringify({sessionId:'749551',location:'CourseDetail.jsx:handleBuy',message:'redirecting to payment',data:{courseId:id,invoice:res.data.invoice_number},timestamp:Date.now(),hypothesisId:'BUY',runId:'payment-integration'})}).catch(()=>{});
+        // #endregion
+        window.location.href = res.data.payment_url;
+        return;
+      }
       await loadCourse();
       setTab('content');
     } catch (err) {

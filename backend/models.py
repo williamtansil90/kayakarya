@@ -295,6 +295,8 @@ class Sale(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     tutor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
+    invoice_number = db.Column(db.String(100), unique=True, nullable=True)
+    payment_url = db.Column(db.String(500), nullable=True)
     status = db.Column(db.Enum('waiting_payment', 'paid', 'cancel'), default='waiting_payment')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -313,6 +315,8 @@ class Sale(db.Model):
             'tutor_id': self.tutor_id,
             'tutor_name': self.tutor.name if self.tutor else None,
             'amount': float(self.amount),
+            'invoice_number': self.invoice_number,
+            'payment_url': self.payment_url,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }

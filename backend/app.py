@@ -8,6 +8,7 @@ from routes.courses_routes import courses_bp
 from routes.tutor_routes import tutor_bp
 from routes.admin_routes import admin_bp
 from routes.settings_routes import settings_bp
+from routes.payment_routes import payment_bp
 
 
 def create_app():
@@ -29,6 +30,7 @@ def create_app():
     app.register_blueprint(tutor_bp, url_prefix='/api/tutor')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(settings_bp, url_prefix='/api/settings')
+    app.register_blueprint(payment_bp, url_prefix='/api/payment')
 
     @app.route('/api/uploads/<filename>')
     def uploaded_file(filename):

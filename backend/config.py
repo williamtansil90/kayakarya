@@ -17,3 +17,6 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    NWT_PAYMENT_URL = os.getenv('NWT_PAYMENT_URL', 'https://pay.nwt.co.id')
+    NWT_API_KEY = os.getenv('NWT_API_KEY', '')
+    APP_URL = os.getenv('APP_URL', 'https://kayakarya.com')
