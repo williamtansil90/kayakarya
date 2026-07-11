@@ -10,12 +10,12 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-echo "==> Build & start Docker containers (VPS mode)..."
-docker compose -f docker-compose.yml -f docker-compose.vps.yml up -d --build
+echo "==> Build & start Docker containers..."
+docker compose up -d --build
 
 echo "==> Menunggu backend sehat..."
 for i in $(seq 1 30); do
-  if docker compose -f docker-compose.yml -f docker-compose.vps.yml exec -T backend python -c \
+  if docker compose exec -T backend python -c \
     "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8702/api/health')" 2>/dev/null; then
     break
   fi
